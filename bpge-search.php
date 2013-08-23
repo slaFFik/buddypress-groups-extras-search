@@ -18,9 +18,11 @@ define('BPGE_PRO_SEARCH_VER', '1.2');
 /**
  * Options for admin area
  */
-add_action('admin_init', 'bpges_admin_init', 999);
-function bpges_admin_init(){
-    include(dirname(__FILE__).'/bpge-search-admin.php');
+add_filter('bpge_admin_tabs', 'bpges_admin_init', 999);
+function bpges_admin_init($tabs){
+    $tabs[] = include(dirname(__FILE__).'/bpge-search-admin.php');
+
+    return $tabs;
 }
 
 add_action('plugins_loaded', 'bpges_init', 999);
