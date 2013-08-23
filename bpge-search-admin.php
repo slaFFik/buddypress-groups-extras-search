@@ -14,7 +14,7 @@ class BPGE_ADMIN_SEARCH extends BPGE_ADMIN_TAB{
     }
 
     function header_title_attach(){
-        return $this->title;
+        return $this->title . '<sup>v'.BPGE_PRO_SEARCH_VER.'</sup>';
     }
 
     /**

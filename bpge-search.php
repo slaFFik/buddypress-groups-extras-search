@@ -31,7 +31,58 @@ function bpges_init(){
     add_filter('bp_groups_get_total_groups_sql', 'bpges_search_add_total', 1, 2);
 }
 
+add_action('bp_directory_groups_item', 'bpges_display_extra_results');
+function bpges_display_extra_results(){
+    $cur_group_id = bp_get_group_id();
+    $group_link   = trim(bp_get_group_permalink(), '/');
+    $results      = bpges_search_get_groups();
+    $display      = '';
 
+    // prepare pages
+    if(!empty($results['map']['pages'])){
+
+        foreach($results['map']['pages'] as $group_id => $data){
+            // display for the current group only
+            if($group_id != $cur_group_id){
+                continue;
+            }
+            foreach($data as $d){
+                $link = $group_link.'/'.BPGE_GPAGES.'/'.$d->post_name.'/';
+                $pages[] = '<a href="'.$link.'" target="_blank">'.stripslashes($d->post_title).'</a>';
+            }
+        }
+        if(!empty($pages)){
+            $display .= __('Found in Group Pages:', 'bpge') . '&nbsp' . implode(', ', $pages);
+        }
+    }
+
+    if(!empty($display)){
+        $display .= '<br/>';
+    }
+
+    // prepare fields
+    if(!empty($results['map']['fields'])){
+        foreach($results['map']['fields'] as $group_id => $data){
+            // display for the current group only
+            if($group_id != $cur_group_id){
+                continue;
+            }
+            foreach($data as $d){
+                $link = $group_link.'/extras/';
+                $fields[] = '<a href="'.$link.'" target="_blank">'.stripslashes($d->post_title).'</a>';
+            }
+        }
+        if(!empty($fields)){
+            $display .= __('Found in Group Fields:', 'bpge') . '&nbsp' . implode(', ', $fields);
+        }
+    }
+
+    if(!empty($display)){
+        echo '<div class="item-desc">';
+        echo $display;
+        echo '</div>';
+    }
+}
 /**
  * Search in posts and fields for group IDs
  */
@@ -49,53 +100,69 @@ function bpges_search_get_groups(){
         return false;
     }
 
-    $group_ids = $pages_group_ids = $fields_group_ids = array();
+    $pages = $fields = array();
+    $group_ids = $pages_groups_ids = $fields_groups_ids = array();
+    $pages_map = $fields_map = array();
 
     // get group_ids from gpages that are relevant to this search
     if( isset($bpge['search_pages']) && $bpge['search_pages'] == 'on' ) {
         $type = BPGE_GPAGES;
-        $pages_group_ids = $wpdb->get_col($wpdb->prepare("SELECT pm.meta_value AS group_id
-                                            FROM {$wpdb->postmeta} AS pm
-                                            LEFT JOIN {$wpdb->posts} AS p ON p.ID = pm.post_id
-                                            WHERE pm.meta_key = 'group_id'
-                                              AND p.post_status = 'publish'
-                                              AND p.post_type = '%s'
-                                              AND p.post_parent > 0
-                                              AND (p.post_title LIKE '%%%s%%'
-                                                OR p.post_content LIKE '%%%s%%'
-                                              )", $type, $search_terms, $search_terms ) );
+        $pages = $wpdb->get_results($wpdb->prepare(
+                        "SELECT
+                            pm.meta_value AS group_id, p.post_name, p.post_title
+                        FROM {$wpdb->postmeta} AS pm
+                        LEFT JOIN {$wpdb->posts} AS p ON p.ID = pm.post_id
+                        WHERE pm.meta_key = 'group_id'
+                          AND p.post_status = 'publish'
+                          AND p.post_type = '%s'
+                          AND p.post_parent > 0
+                          AND (p.post_title LIKE '%%%s%%'
+                                OR p.post_content COLLATE UTF8_GENERAL_CI LIKE '%%%s%%'
+                              )", $type, $search_terms, $search_terms ) );
+    }
+    foreach($pages as $data){
+        $pages_groups_ids[]           = $data->group_id;
+        $pages_map[$data->group_id][] = $data;
     }
 
     // get groups_ids from fields that are relevant to this search
     if( isset($bpge['search_fields']) && $bpge['search_fields'] == 'on' ) {
         $type = BPGE_GFIELDS;
-        $fields_group_ids = $wpdb->get_col($wpdb->prepare("SELECT DISTINCT (post_parent) AS group_id
-                                    FROM wp_posts
-                                    WHERE post_type = '%s'
-                                      AND post_status = 'publish'
-                                      AND post_parent > 0
-                                      AND post_content LIKE '%%%s%%';", $type, $search_terms));
+        $fields = $wpdb->get_results($wpdb->prepare(
+                            "SELECT
+                                DISTINCT (post_parent) AS group_id, post_name, post_title
+                            FROM wp_posts
+                            WHERE post_type = '%s'
+                              AND post_status = 'publish'
+                              AND post_parent > 0
+                              AND post_content COLLATE UTF8_GENERAL_CI LIKE '%%%s%%';", $type, $search_terms));
+    }
+    foreach($fields as $data){
+        $fields_groups_ids[]           = $data->group_id;
+        $fields_map[$data->group_id][] = $data;
     }
 
     // merge groups from 2 types of searches
-    $group_ids = array_merge($pages_group_ids, $fields_group_ids);
+    $results['groups_ids']    = array_merge($pages_groups_ids, $fields_groups_ids);
+    $results['map']['pages']  = $pages_map;
+    $results['map']['fields'] = $fields_map;
 
-    return $group_ids;
+    return $results;
 }
 
 /**
  * Modify pages search results
  */
-// add_filter('bp_groups_get_paged_groups_sql', 'bpges_search_add_paged', 1, 2);
 function bpges_search_add_paged($sql_str, $sql_arr){
     if( !isset($sql_arr['search']) )
         return $sql_str;
 
     // get all groups that have pages/fiels that are good for this search
-    $group_ids = bpges_search_get_groups();
+    $results   = bpges_search_get_groups();
+    $groups_ids = $results['groups_ids'];
 
-    if(!empty($group_ids)){
-        $include = 'g.ID IN ('. implode(',', $group_ids) .')';
+    if(!empty($groups_ids)){
+        $include = 'g.ID IN ('. implode(',', $groups_ids) .')';
 
         // modify the query to get search working with groups pages
         $sql_arr['search']  = str_replace('g.name LIKE', $include . ' OR g.name LIKE', $sql_arr['search']);
@@ -107,7 +174,6 @@ function bpges_search_add_paged($sql_str, $sql_arr){
 /**
  * Modify total search results (for pagination and counters)
  */
-// add_filter('bp_groups_get_total_groups_sql', 'bpges_search_add_total', 1, 2);
 function bpges_search_add_total($sql_str, $sql_arr){
     // check that we are in a search
     $pos = strpos($sql_str, 'g.name LIKE');
@@ -115,10 +181,11 @@ function bpges_search_add_total($sql_str, $sql_arr){
         return $sql_str;
 
     // get all groups that have pages/fiels that are good for this search
-    $group_ids = bpges_search_get_groups();
+    $results   = bpges_search_get_groups();
+    $groups_ids = $results['groups_ids'];
 
-    if(!empty($group_ids)){
-        $include = 'g.ID IN ('. implode(',', $group_ids) .')';
+    if(!empty($groups_ids)){
+        $include = 'g.ID IN ('. implode(',', $groups_ids) .')';
 
         // insert it into search
         $sql_str = str_replace('g.name LIKE', $include . ' OR g.name LIKE', $sql_str);
