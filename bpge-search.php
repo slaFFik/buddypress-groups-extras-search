@@ -2,7 +2,7 @@
 /*
 Plugin Name: BuddyPress Groups Extras Pro - Search
 Plugin URI: http://ovirium.com/downloads/bp-groups-extras-pro-search/
-Description: Adding extra fields and pages, menu sorting and other missing functionality to groups
+Description: Now custom content created by BPGE is searchable
 Version: 1.2
 Author: slaFFik
 Author URI: http://ovirium.com/
@@ -90,12 +90,14 @@ function bpges_search_get_groups(){
     global $wpdb, $bpge;
 
     // get the search terms
-    if (isset($_REQUEST['search_terms'])) {
+    if (isset($_REQUEST['search_terms']) && !empty($_REQUEST['search_terms'])) {
+        $search_terms = strip_tags(trim($_REQUEST['search_terms']));
         // ajax
-        $search_terms = esc_sql( like_escape( $_REQUEST['search_terms'] ) );
-    }elseif (isset($_REQUEST['s'])){
+        $search_terms = esc_sql( like_escape( $search_terms ) );
+    }elseif (isset($_REQUEST['s']) && !empty($_REQUEST['s'])){
+        $search_terms = strip_tags(trim($_REQUEST['s']));
         // url-based
-        $search_terms = esc_sql( like_escape( $_REQUEST['s'] ) );
+        $search_terms = esc_sql( like_escape( $search_terms ) );
     }else{
         return false;
     }
