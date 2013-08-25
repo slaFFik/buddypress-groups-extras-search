@@ -25,12 +25,28 @@ function bpges_admin_init($tabs){
     return $tabs;
 }
 
+/**
+ * Remove cron
+ */
+add_action('admin_init', 'bpges_remove_cron');
+function bpges_remove_cron(){
+    if ( wp_next_scheduled('bpge_pro_check_versions_event') ) {
+        wp_clear_scheduled_hook('bpge_pro_check_versions_event');
+    }
+}
+
+/**
+ * Intrude into get_groups sql
+ */
 add_action('plugins_loaded', 'bpges_init', 999);
 function bpges_init(){
     add_filter('bp_groups_get_paged_groups_sql', 'bpges_search_add_paged', 1, 2);
     add_filter('bp_groups_get_total_groups_sql', 'bpges_search_add_total', 1, 2);
 }
 
+/**
+ * In groups lists that are search results display where we found data
+ */
 add_action('bp_directory_groups_item', 'bpges_display_extra_results');
 function bpges_display_extra_results(){
     $cur_group_id = bp_get_group_id();
@@ -83,6 +99,7 @@ function bpges_display_extra_results(){
         echo '</div>';
     }
 }
+
 /**
  * Search in posts and fields for group IDs
  */
