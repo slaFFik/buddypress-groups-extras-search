@@ -3,7 +3,7 @@
 Plugin Name: BuddyPress Groups Extras Pro - Search
 Plugin URI: http://ovirium.com/downloads/bp-groups-extras-pro-search/
 Description: Now custom content created by BPGE is searchable
-Version: 1.2
+Version: 1.3
 Author: slaFFik
 Author URI: http://ovirium.com/
 */
@@ -13,10 +13,14 @@ if ( ! defined( 'BPGE_PRO' ) ) {
 }
 
 define( 'BPGE_PRO_SEARCH', true );
-define( 'BPGE_PRO_SEARCH_VER', '1.2' );
+define( 'BPGE_PRO_SEARCH_VER', '1.3' );
 
 /**
  * Options for admin area
+ *
+ * @param array $tabs
+ *
+ * @return array
  */
 function bpges_admin_init( $tabs ) {
 	$tabs[] = include( dirname( __FILE__ ) . '/bpge-search-admin.php' );
@@ -203,12 +207,16 @@ function bpges_search_add_paged( $sql_str, $sql_arr ) {
 /**
  * Modify total search results (for pagination and counters)
  *
- * @param $sql_str
- * @param $sql_arr
+ * @param string $sql_str
+ * @param string $sql_arr
  *
  * @return mixed
  */
-function bpges_search_add_total( $sql_str, $sql_arr ) {
+function bpges_search_add_total(
+	$sql_str,
+	/** @noinspection PhpUnusedParameterInspection */
+	$sql_arr
+) {
 	// check that we are in a search
 	$pos = strpos( $sql_str, 'g.name LIKE' );
 	if ( $pos === false ) {
