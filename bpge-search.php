@@ -3,7 +3,7 @@
 Plugin Name: BuddyPress Groups Extras Pro - Search
 Plugin URI: http://ovirium.com/downloads/bp-groups-extras-pro-search/
 Description: Now custom content created by BPGE is searchable
-Version: 1.3
+Version: 1.2.1
 Author: slaFFik
 Author URI: http://ovirium.com/
 */
@@ -13,7 +13,7 @@ if ( ! defined( 'BPGE_PRO' ) ) {
 }
 
 define( 'BPGE_PRO_SEARCH', true );
-define( 'BPGE_PRO_SEARCH_VER', '1.3' );
+define( 'BPGE_PRO_SEARCH_VER', '1.2.1' );
 
 /**
  * Options for admin area
