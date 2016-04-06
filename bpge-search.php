@@ -74,7 +74,7 @@ function bpges_display_extra_results() {
 			}
 		}
 		if ( ! empty( $pages ) ) {
-			$display .= __( 'Found in Group Pages:', 'bpge' ) . '&nbsp' . implode( ', ', $pages );
+			$display .= __( 'Found in Group Pages:', BPGE_I18N ) . '&nbsp' . implode( ', ', $pages );
 		}
 	}
 
@@ -95,7 +95,7 @@ function bpges_display_extra_results() {
 			}
 		}
 		if ( ! empty( $fields ) ) {
-			$display .= __( 'Found in Group Fields:', 'bpge' ) . '&nbsp' . implode( ', ', $fields );
+			$display .= __( 'Found in Group Fields:', BPGE_I18N ) . '&nbsp' . implode( ', ', $fields );
 		}
 	}
 
