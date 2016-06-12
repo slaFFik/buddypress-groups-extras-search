@@ -10,4 +10,4 @@ Search results even show you where exactly the search term was found: in a field
 
 ## Screenshot
 
-![Screenshot](https://github.com/slaFFik/BP-Groups-Extras-Search/blob/master/bpges_results.png)
+![Screenshot](https://github.com/slaFFik/BP-Groups-Extras-Search/blob/e4d9c016efc7c4c751bd75c917d0cf37faa99e32/bpges_results.png)
