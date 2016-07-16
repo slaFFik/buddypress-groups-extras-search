@@ -1,11 +1,11 @@
 <?php
 /*
-Plugin Name: BuddyPress Groups Extras Pro - Search
-Plugin URI: http://ovirium.com/downloads/bp-groups-extras-pro-search/
+Plugin Name: BuddyPress Groups Extras - Search
+Plugin URI: https://github.com/slaFFik/BP-Groups-Extras-Search
 Description: Now custom content created by BPGE is searchable
 Version: 1.2.1
 Author: slaFFik
-Author URI: http://ovirium.com/
+Author URI: https://ovirium.com/
 */
 
 if ( ! defined( 'BPGE_PRO' ) ) {
@@ -74,7 +74,7 @@ function bpges_display_extra_results() {
 			}
 		}
 		if ( ! empty( $pages ) ) {
-			$display .= __( 'Found in Group Pages:', BPGE_I18N ) . '&nbsp' . implode( ', ', $pages );
+			$display .= __( 'Found in Group Pages:', 'buddypress-groups-extras' ) . '&nbsp' . implode( ', ', $pages );
 		}
 	}
 
@@ -95,7 +95,7 @@ function bpges_display_extra_results() {
 			}
 		}
 		if ( ! empty( $fields ) ) {
-			$display .= __( 'Found in Group Fields:', BPGE_I18N ) . '&nbsp' . implode( ', ', $fields );
+			$display .= __( 'Found in Group Fields:', 'buddypress-groups-extras' ) . '&nbsp' . implode( ', ', $fields );
 		}
 	}
 
