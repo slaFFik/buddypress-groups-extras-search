@@ -1,10 +1,10 @@
 # BP Groups Extras - Search
 
-Make custom content, created by BP Groups Extras, searchable.
+Make custom content, created by [BP Groups Extras](https://wordpress.org/plugins/buddypress-groups-extras/), searchable.
 
 ## How it works?
 
-BPGE plugin allows you to create custom groups fields and pages. But they are not searchable by BuddyPress be default. This extension allows you to search from BuddyPress Groups directory for those fields and pages content.
+BPGE plugin allows you to create custom fields and pages for any group. But they are not searchable by default. This extension allows you to search from BuddyPress Groups directory in those fields and pages title and content.
 
 Search results even show you where exactly the search term was found: in a field or in a page.
 
