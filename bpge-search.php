@@ -154,7 +154,7 @@ function bpges_search_get_groups( $search_terms = null ) {
                           AND p.post_type = '%s'
                           AND p.post_parent > 0
                           AND (p.post_title LIKE %s
-                                OR p.post_content COLLATE UTF8_GENERAL_CI LIKE %s'
+                                OR p.post_content LIKE %s'
                               )", $type, $search_terms_sql, $search_terms_sql ) );
 	}
 	foreach ( $pages as $data ) {
@@ -171,7 +171,7 @@ function bpges_search_get_groups( $search_terms = null ) {
 			WHERE post_type = '%s'
 			  AND post_status = 'publish'
 			  AND post_parent > 0
-			  AND post_content COLLATE UTF8_GENERAL_CI LIKE %s;", $type, $search_terms_sql ) );
+			  AND post_content LIKE %s;", $type, $search_terms_sql ) );
 	}
 	foreach ( $fields as $data ) {
 		$fields_groups_ids[]             = $data->group_id;
