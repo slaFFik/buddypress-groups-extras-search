@@ -111,20 +111,22 @@ add_action( 'bp_directory_groups_item', 'bpges_display_extra_results' );
 /**
  * Search in posts and fields for group IDs
  */
-function bpges_search_get_groups() {
+function bpges_search_get_groups( $search_terms = null ) {
 	/** @var $wpdb WPDB */
 	global $wpdb, $bpge;
 
 	// get the search terms
-	$query_arg = bp_core_get_component_search_query_arg( 'groups' );
-	if ( isset( $_REQUEST['search_terms'] ) && ! empty( $_REQUEST['search_terms'] ) ) {
-		$search_terms = strip_tags( trim( $_REQUEST['search_terms'] ) );
-	} elseif ( isset( $_REQUEST['s'] ) && ! empty( $_REQUEST['s'] ) ) {
-		$search_terms = strip_tags( trim( $_REQUEST['s'] ) );
-	} elseif ( ! empty( $_REQUEST[ $query_arg ] ) )  {
-		$search_terms = trim( wp_unslash( $_REQUEST[ $query_arg ] ) );
-	} else {
-		return false;
+	if ( null === $search_terms ) {
+		$query_arg = bp_core_get_component_search_query_arg( 'groups' );
+		if ( isset( $_REQUEST['search_terms'] ) && ! empty( $_REQUEST['search_terms'] ) ) {
+			$search_terms = strip_tags( trim( $_REQUEST['search_terms'] ) );
+		} elseif ( isset( $_REQUEST['s'] ) && ! empty( $_REQUEST['s'] ) ) {
+			$search_terms = strip_tags( trim( $_REQUEST['s'] ) );
+		} elseif ( ! empty( $_REQUEST[ $query_arg ] ) )  {
+			$search_terms = trim( wp_unslash( $_REQUEST[ $query_arg ] ) );
+		} else {
+			return false;
+		}
 	}
 
 	$search_terms = '%' . $wpdb->esc_like( $search_terms ) . '%';
@@ -193,7 +195,7 @@ function bpges_search_add_paged( $sql_str, $sql_arr, $query_args ) {
 	}
 
 	// get all groups that have pages/fiels that are good for this search
-	$results    = bpges_search_get_groups();
+	$results    = bpges_search_get_groups( $query_args['search_terms'] );
 	$groups_ids = $results['groups_ids'];
 
 	if ( ! empty( $groups_ids ) ) {
@@ -226,7 +228,7 @@ function bpges_search_add_total(
 	}
 
 	// get all groups that have pages/fiels that are good for this search
-	$results    = bpges_search_get_groups();
+	$results    = bpges_search_get_groups( $query_args['search_terms'] );
 	$groups_ids = $results['groups_ids'];
 
 	if ( ! empty( $groups_ids ) ) {
