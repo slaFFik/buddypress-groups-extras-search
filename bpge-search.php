@@ -45,8 +45,8 @@ add_action( 'admin_init', 'bpges_remove_cron' );
  * Intrude into get_groups sql
  */
 function bpges_init() {
-	add_filter( 'bp_groups_get_paged_groups_sql', 'bpges_search_add_paged', 1, 2 );
-	add_filter( 'bp_groups_get_total_groups_sql', 'bpges_search_add_total', 1, 2 );
+	add_filter( 'bp_groups_get_paged_groups_sql', 'bpges_search_add_paged', 1, 3 );
+	add_filter( 'bp_groups_get_total_groups_sql', 'bpges_search_add_total', 1, 3 );
 }
 
 add_action( 'plugins_loaded', 'bpges_init', 999 );
@@ -111,22 +111,31 @@ add_action( 'bp_directory_groups_item', 'bpges_display_extra_results' );
 /**
  * Search in posts and fields for group IDs
  */
-function bpges_search_get_groups() {
+function bpges_search_get_groups( $search_terms = null ) {
 	/** @var $wpdb WPDB */
 	global $wpdb, $bpge;
+	static $cached;
 
 	// get the search terms
-	if ( isset( $_REQUEST['search_terms'] ) && ! empty( $_REQUEST['search_terms'] ) ) {
-		$search_terms = strip_tags( trim( $_REQUEST['search_terms'] ) );
-		// ajax
-		$search_terms = esc_sql( $wpdb->esc_like( $search_terms ) );
-	} elseif ( isset( $_REQUEST['s'] ) && ! empty( $_REQUEST['s'] ) ) {
-		$search_terms = strip_tags( trim( $_REQUEST['s'] ) );
-		// url-based
-		$search_terms = esc_sql( $wpdb->esc_like( $search_terms ) );
-	} else {
-		return false;
+	if ( null === $search_terms ) {
+		$query_arg = bp_core_get_component_search_query_arg( 'groups' );
+		if ( isset( $_REQUEST['search_terms'] ) && ! empty( $_REQUEST['search_terms'] ) ) {
+			$search_terms = strip_tags( trim( $_REQUEST['search_terms'] ) );
+		} elseif ( isset( $_REQUEST['s'] ) && ! empty( $_REQUEST['s'] ) ) {
+			$search_terms = strip_tags( trim( $_REQUEST['s'] ) );
+		} elseif ( ! empty( $_REQUEST[ $query_arg ] ) )  {
+			$search_terms = trim( wp_unslash( $_REQUEST[ $query_arg ] ) );
+		} else {
+			return false;
+		}
 	}
+
+	// Don't query for the same results twice.
+	if ( isset( $cached[ $search_terms ] ) ) {
+		return $cached;
+	}
+
+	$search_terms_sql = '%' . $wpdb->esc_like( $search_terms ) . '%';
 
 	$pages            = $fields = array();
 	$pages_groups_ids = $fields_groups_ids = array();
@@ -144,9 +153,9 @@ function bpges_search_get_groups() {
                           AND p.post_status = 'publish'
                           AND p.post_type = '%s'
                           AND p.post_parent > 0
-                          AND (p.post_title LIKE '%%%s%%'
-                                OR p.post_content COLLATE UTF8_GENERAL_CI LIKE '%%%s%%'
-                              )", $type, $search_terms, $search_terms ) );
+                          AND (p.post_title LIKE %s
+                                OR p.post_content LIKE %s'
+                              )", $type, $search_terms_sql, $search_terms_sql ) );
 	}
 	foreach ( $pages as $data ) {
 		$pages_groups_ids[]             = $data->group_id;
@@ -158,11 +167,11 @@ function bpges_search_get_groups() {
 		$type   = BPGE_GFIELDS;
 		$fields = $wpdb->get_results( $wpdb->prepare(
 			"SELECT DISTINCT (post_parent) AS group_id, post_name, post_title
-            FROM wp_posts
-            WHERE post_type = '%s'
-              AND post_status = 'publish'
-              AND post_parent > 0
-              AND post_content COLLATE UTF8_GENERAL_CI LIKE '%%%s%%';", $type, $search_terms ) );
+			FROM wp_posts
+			WHERE post_type = '%s'
+			  AND post_status = 'publish'
+			  AND post_parent > 0
+			  AND post_content LIKE %s;", $type, $search_terms_sql ) );
 	}
 	foreach ( $fields as $data ) {
 		$fields_groups_ids[]             = $data->group_id;
@@ -174,6 +183,8 @@ function bpges_search_get_groups() {
 	$results['map']['pages']  = $pages_map;
 	$results['map']['fields'] = $fields_map;
 
+	$cached[ $search_terms ] = $results;
+
 	return $results;
 }
 
@@ -182,16 +193,17 @@ function bpges_search_get_groups() {
  *
  * @param $sql_str
  * @param $sql_arr
+ * @param $query_args
  *
  * @return string
  */
-function bpges_search_add_paged( $sql_str, $sql_arr ) {
-	if ( ! isset( $sql_arr['search'] ) ) {
+function bpges_search_add_paged( $sql_str, $sql_arr, $query_args ) {
+	if ( empty( $query_args['search_terms'] ) ) {
 		return $sql_str;
 	}
 
 	// get all groups that have pages/fiels that are good for this search
-	$results    = bpges_search_get_groups();
+	$results    = bpges_search_get_groups( $query_args['search_terms'] );
 	$groups_ids = $results['groups_ids'];
 
 	if ( ! empty( $groups_ids ) ) {
@@ -209,22 +221,22 @@ function bpges_search_add_paged( $sql_str, $sql_arr ) {
  *
  * @param string $sql_str
  * @param string $sql_arr
+ * @param array $query_args
  *
  * @return mixed
  */
 function bpges_search_add_total(
 	$sql_str,
 	/** @noinspection PhpUnusedParameterInspection */
-	$sql_arr
+	$sql_arr,
+	$query_args
 ) {
-	// check that we are in a search
-	$pos = strpos( $sql_str, 'g.name LIKE' );
-	if ( $pos === false ) {
+	if ( empty( $query_args['search_terms'] ) ) {
 		return $sql_str;
 	}
 
 	// get all groups that have pages/fiels that are good for this search
-	$results    = bpges_search_get_groups();
+	$results    = bpges_search_get_groups( $query_args['search_terms'] );
 	$groups_ids = $results['groups_ids'];
 
 	if ( ! empty( $groups_ids ) ) {
