@@ -1,19 +1,30 @@
 <?php
 
+/**
+ * Class BPGE_ADMIN_SEARCH that handles the logic behind "Settings -> BP Groups Extras -> Search" page.
+ */
 class BPGE_ADMIN_SEARCH extends BPGE_ADMIN_TAB {
-	// position is used to define where exactly this tab will appear
+	// Position is used to define where exactly this tab will appear
 	var $position = 35;
-	// slug that is used in url to access this tab
+	// Slug that is used in url to access this tab
 	var $slug = 'search';
-	// title is used as a tab name
+	// Title is used as a tab name
 	var $title = null;
 
+	/**
+	 * Init the new admin area extension page.
+	 */
 	function __construct() {
 		$this->title = __( 'Search', 'buddypress-groups-extras' );
 
 		parent::__construct();
 	}
 
+	/**
+	 * Return an additional page title header text for this extension.
+	 *
+	 * @return string
+	 */
 	function header_title_attach() {
 		return $this->title . '<sup>v' . BPGE_PRO_SEARCH_VER . '</sup>';
 	}
@@ -45,14 +56,14 @@ class BPGE_ADMIN_SEARCH extends BPGE_ADMIN_TAB {
 	}
 
 	/**
-	 * Display the tab description
+	 * Display the tab description.
 	 */
 	function display() {
 		echo '<p class="description">' . __( 'Control the search options of groups fields and pages.', 'buddypress-groups-extras' ) . '</p>';
 	}
 
 	/**
-	 * Preparaion section
+	 * Preparaion section.
 	 */
 	function display_prepare() { ?>
 		<p>
@@ -65,7 +76,7 @@ class BPGE_ADMIN_SEARCH extends BPGE_ADMIN_TAB {
 	}
 
 	/**
-	 * Options for fields
+	 * Options for fields.
 	 */
 	function display_fields() { ?>
 		<p>
@@ -93,7 +104,7 @@ class BPGE_ADMIN_SEARCH extends BPGE_ADMIN_TAB {
 	}
 
 	/**
-	 * Options for pages
+	 * Options for pages.
 	 */
 	function display_pages() { ?>
 		<p>
@@ -121,7 +132,7 @@ class BPGE_ADMIN_SEARCH extends BPGE_ADMIN_TAB {
 	}
 
 	/**
-	 *
+	 * Convert fields values into links, that lead to groups search.
 	 */
 	function display_f2l() {
 		echo '<p>';
@@ -144,19 +155,19 @@ class BPGE_ADMIN_SEARCH extends BPGE_ADMIN_TAB {
 	}
 
 	/**
-	 * Save everything
+	 * Save everything.
 	 */
 	function save() {
 		if ( isset( $_POST['bpge_search_fields'] ) ) {
-			$this->bpge['search_fields'] = $_POST['bpge_search_fields'] == 'on' ? 'on' : 'off';
+			$this->bpge['search_fields'] = $_POST['bpge_search_fields'] === 'on' ? 'on' : 'off';
 		}
 
 		if ( isset( $_POST['bpge_search_pages'] ) ) {
-			$this->bpge['search_pages'] = $_POST['bpge_search_pages'] == 'on' ? 'on' : 'off';
+			$this->bpge['search_pages'] = $_POST['bpge_search_pages'] === 'on' ? 'on' : 'off';
 		}
 
 		if ( isset( $_POST['bpge_field_2_link'] ) ) {
-			$this->bpge['field_2_link'] = $_POST['bpge_field_2_link'] == 'yes' ? 'yes' : 'no';
+			$this->bpge['field_2_link'] = $_POST['bpge_field_2_link'] === 'yes' ? 'yes' : 'no';
 		}
 
 		if ( isset( $_POST['bpge_search_prepare'] ) ) {
@@ -171,7 +182,7 @@ class BPGE_ADMIN_SEARCH extends BPGE_ADMIN_TAB {
 			foreach ( (array) $meta as $data ) {
 				$data->data = maybe_unserialize( $data->data );
 				foreach ( $data->data as $k => $v ) {
-					if ( $k == 'gpage_id' ) {
+					if ( $k === 'gpage_id' ) {
 						// $v = post_id (gpage associated with the group)
 						// now we need to get all its subpages and provide group_id for them too
 						update_post_meta( $v, 'group_id', $data->group_id );
