@@ -116,17 +116,18 @@ function bpges_search_get_groups() {
 	global $wpdb, $bpge;
 
 	// get the search terms
+	$query_arg = bp_core_get_component_search_query_arg( 'groups' );
 	if ( isset( $_REQUEST['search_terms'] ) && ! empty( $_REQUEST['search_terms'] ) ) {
 		$search_terms = strip_tags( trim( $_REQUEST['search_terms'] ) );
-		// ajax
-		$search_terms = esc_sql( $wpdb->esc_like( $search_terms ) );
 	} elseif ( isset( $_REQUEST['s'] ) && ! empty( $_REQUEST['s'] ) ) {
 		$search_terms = strip_tags( trim( $_REQUEST['s'] ) );
-		// url-based
-		$search_terms = esc_sql( $wpdb->esc_like( $search_terms ) );
+	} elseif ( ! empty( $_REQUEST[ $query_arg ] ) )  {
+		$search_terms = trim( wp_unslash( $_REQUEST[ $query_arg ] ) );
 	} else {
 		return false;
 	}
+
+	$search_terms = '%' . $wpdb->esc_like( $search_terms ) . '%';
 
 	$pages            = $fields = array();
 	$pages_groups_ids = $fields_groups_ids = array();
@@ -144,8 +145,8 @@ function bpges_search_get_groups() {
                           AND p.post_status = 'publish'
                           AND p.post_type = '%s'
                           AND p.post_parent > 0
-                          AND (p.post_title LIKE '%%%s%%'
-                                OR p.post_content COLLATE UTF8_GENERAL_CI LIKE '%%%s%%'
+                          AND (p.post_title LIKE %s
+                                OR p.post_content COLLATE UTF8_GENERAL_CI LIKE %s'
                               )", $type, $search_terms, $search_terms ) );
 	}
 	foreach ( $pages as $data ) {
@@ -158,11 +159,11 @@ function bpges_search_get_groups() {
 		$type   = BPGE_GFIELDS;
 		$fields = $wpdb->get_results( $wpdb->prepare(
 			"SELECT DISTINCT (post_parent) AS group_id, post_name, post_title
-            FROM wp_posts
-            WHERE post_type = '%s'
-              AND post_status = 'publish'
-              AND post_parent > 0
-              AND post_content COLLATE UTF8_GENERAL_CI LIKE '%%%s%%';", $type, $search_terms ) );
+			FROM wp_posts
+			WHERE post_type = '%s'
+			  AND post_status = 'publish'
+			  AND post_parent > 0
+			  AND post_content COLLATE UTF8_GENERAL_CI LIKE %s;", $type, $search_terms ) );
 	}
 	foreach ( $fields as $data ) {
 		$fields_groups_ids[]             = $data->group_id;
