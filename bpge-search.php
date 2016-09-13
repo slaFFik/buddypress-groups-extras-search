@@ -45,8 +45,8 @@ add_action( 'admin_init', 'bpges_remove_cron' );
  * Intrude into get_groups sql
  */
 function bpges_init() {
-	add_filter( 'bp_groups_get_paged_groups_sql', 'bpges_search_add_paged', 1, 2 );
-	add_filter( 'bp_groups_get_total_groups_sql', 'bpges_search_add_total', 1, 2 );
+	add_filter( 'bp_groups_get_paged_groups_sql', 'bpges_search_add_paged', 1, 3 );
+	add_filter( 'bp_groups_get_total_groups_sql', 'bpges_search_add_total', 1, 3 );
 }
 
 add_action( 'plugins_loaded', 'bpges_init', 999 );
@@ -182,11 +182,12 @@ function bpges_search_get_groups() {
  *
  * @param $sql_str
  * @param $sql_arr
+ * @param $query_args
  *
  * @return string
  */
-function bpges_search_add_paged( $sql_str, $sql_arr ) {
-	if ( ! isset( $sql_arr['search'] ) ) {
+function bpges_search_add_paged( $sql_str, $sql_arr, $query_args ) {
+	if ( empty( $query_args['search_terms'] ) ) {
 		return $sql_str;
 	}
 
@@ -209,17 +210,17 @@ function bpges_search_add_paged( $sql_str, $sql_arr ) {
  *
  * @param string $sql_str
  * @param string $sql_arr
+ * @param array $query_args
  *
  * @return mixed
  */
 function bpges_search_add_total(
 	$sql_str,
 	/** @noinspection PhpUnusedParameterInspection */
-	$sql_arr
+	$sql_arr,
+	$query_args
 ) {
-	// check that we are in a search
-	$pos = strpos( $sql_str, 'g.name LIKE' );
-	if ( $pos === false ) {
+	if ( empty( $query_args['search_terms'] ) ) {
 		return $sql_str;
 	}
 
