@@ -114,6 +114,7 @@ add_action( 'bp_directory_groups_item', 'bpges_display_extra_results' );
 function bpges_search_get_groups( $search_terms = null ) {
 	/** @var $wpdb WPDB */
 	global $wpdb, $bpge;
+	static $cached;
 
 	// get the search terms
 	if ( null === $search_terms ) {
@@ -129,7 +130,12 @@ function bpges_search_get_groups( $search_terms = null ) {
 		}
 	}
 
-	$search_terms = '%' . $wpdb->esc_like( $search_terms ) . '%';
+	// Don't query for the same results twice.
+	if ( isset( $cached[ $search_terms ] ) ) {
+		return $cached;
+	}
+
+	$search_terms_sql = '%' . $wpdb->esc_like( $search_terms ) . '%';
 
 	$pages            = $fields = array();
 	$pages_groups_ids = $fields_groups_ids = array();
@@ -149,7 +155,7 @@ function bpges_search_get_groups( $search_terms = null ) {
                           AND p.post_parent > 0
                           AND (p.post_title LIKE %s
                                 OR p.post_content COLLATE UTF8_GENERAL_CI LIKE %s'
-                              )", $type, $search_terms, $search_terms ) );
+                              )", $type, $search_terms_sql, $search_terms_sql ) );
 	}
 	foreach ( $pages as $data ) {
 		$pages_groups_ids[]             = $data->group_id;
@@ -165,7 +171,7 @@ function bpges_search_get_groups( $search_terms = null ) {
 			WHERE post_type = '%s'
 			  AND post_status = 'publish'
 			  AND post_parent > 0
-			  AND post_content COLLATE UTF8_GENERAL_CI LIKE %s;", $type, $search_terms ) );
+			  AND post_content COLLATE UTF8_GENERAL_CI LIKE %s;", $type, $search_terms_sql ) );
 	}
 	foreach ( $fields as $data ) {
 		$fields_groups_ids[]             = $data->group_id;
@@ -176,6 +182,8 @@ function bpges_search_get_groups( $search_terms = null ) {
 	$results['groups_ids']    = array_merge( $pages_groups_ids, $fields_groups_ids );
 	$results['map']['pages']  = $pages_map;
 	$results['map']['fields'] = $fields_map;
+
+	$cached[ $search_terms ] = $results;
 
 	return $results;
 }
